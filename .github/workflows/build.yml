@@ -1,0 +1,40 @@
+name: Build Kivy APK
+
+on:
+  push:
+    branches: [ "main" ]   # Runs when you push to main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip python3-setuptools git zip
+        pip install --upgrade pip
+        pip install buildozer cython virtualenv
+
+    - name: Install AIDL & Android Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y openjdk-17-jdk unzip wget
+        yes | sdkmanager --licenses || true
+        sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "emulator" "cmdline-tools;latest" "tools"
+
+    - name: Build APK with Buildozer
+      run: |
+        buildozer android debug
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: apk
+        path: bin/*.apk
